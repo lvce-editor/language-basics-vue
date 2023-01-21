@@ -1,4 +1,4 @@
-# Language Basics VUE
+# Language Basics Vue
 
 ## Contributing
 
