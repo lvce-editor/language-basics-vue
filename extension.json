@@ -1,7 +1,7 @@
 {
   "id": "builtin.language-basics-vue",
-  "name": "Language Basics VUE",
-  "description": "Provides syntax highlighting and bracket matching in VUE files.",
+  "name": "Language Basics Vue",
+  "description": "Provides syntax highlighting and bracket matching in Vue files.",
   "languages": [
     {
       "id": "vue",
