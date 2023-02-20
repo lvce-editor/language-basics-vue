@@ -84,8 +84,12 @@ Text
 PunctuationTag
 TagName
 Whitespace
-Text
-Text
+AttributeName
+Punctuation
+PunctuationString
+String
+PunctuationString
+PunctuationTag
 NewLine
 Text
 NewLine

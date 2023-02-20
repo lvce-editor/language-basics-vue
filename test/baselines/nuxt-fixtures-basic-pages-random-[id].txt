@@ -182,11 +182,12 @@ Text
 PunctuationTag
 TagName
 Whitespace
-Text
-Text
-Text
-Text
-Text
+AttributeName
+Punctuation
+PunctuationString
+String
+PunctuationString
+PunctuationTag
 NewLine
 Text
 NewLine
