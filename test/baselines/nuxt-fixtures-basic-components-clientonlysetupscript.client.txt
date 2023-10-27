@@ -10,11 +10,8 @@ String
 PunctuationString
 PunctuationTag
 NewLine
-Text
-PunctuationTag
-Text
+Embedded
 NewLine
-PunctuationTag
 PunctuationTag
 TagName
 PunctuationTag

@@ -2,13 +2,12 @@ PunctuationTag
 TagName
 PunctuationTag
 NewLine
-Text
+Embedded
 NewLine
-Text
+Embedded
 NewLine
-Text
+Embedded
 NewLine
-PunctuationTag
 PunctuationTag
 TagName
 PunctuationTag
