@@ -15,6 +15,8 @@ const State = {
   None: 11,
   InsideDoubleQuoteString: 12,
   InsideSingleQuoteString: 13,
+  InsideScriptContent: 14,
+  InsideStyleContent: 15,
 }
 
 export const StateMap = {}
@@ -36,6 +38,7 @@ export const TokenType = {
   Error: 141,
   PunctuationString: 11,
   NewLine: 891,
+  Embedded: 999,
 }
 
 export const TokenMap = {
@@ -51,6 +54,7 @@ export const TokenMap = {
   [TokenType.Punctuation]: 'Punctuation',
   [TokenType.Error]: 'Error',
   [TokenType.PunctuationString]: 'PunctuationString',
+  [TokenType.Embedded]: 'Embedded',
 }
 
 const RE_ANGLE_BRACKET_CLOSE = /^>/
@@ -86,9 +90,88 @@ const RE_TEXT = /^[^<>\n]+/
 const RE_WHITESPACE = /^\s+/
 const RE_WORD = /^[^\s]+/
 const RE_ATTRIBUTE_VALUE_UNQUOTED = /^[^<>]+/
+const RE_SCRIPT_CONTENT = /^..*?(?=(?:<\/script)|$)/s
+const RE_SCRIPT_CONTENT_END = /^<\/script/
+const RE_STYLE_CONTENT = /^..*?(?=(?:<\/(?:style|head))|$)/s
+const RE_STYLE_CONTENT_END = /^<\/style/
+const RE_STYLE_CONTENT_END_2 = /^<\/head/
+const RE_TYPE = /^[^\s\>]+/
+
+/**
+ *
+ * @param {string} attribute
+ * @returns {string}
+ */
+const getEmbeddedLanguageId = (attribute) => {
+  const attributeLowerCase = attribute.toLowerCase()
+  switch (attributeLowerCase) {
+    case 'js':
+      return 'javascript'
+    case 'ts':
+      return 'typescript'
+    case 'shell':
+    case 'sh':
+    case 'bash':
+      return 'shellscript'
+    case 'md':
+      return 'markdown'
+    case 'text':
+      return 'plaintext'
+    default:
+      if (attributeLowerCase.includes(':')) {
+        const parts = attributeLowerCase.split(':')
+        const firstPart = parts[0]
+        return getEmbeddedLanguageId(firstPart)
+      }
+      return attributeLowerCase
+  }
+}
 
 export const initialLineState = {
   state: State.TopLevelContent,
+  embeddedLanguage: '',
+  embeddedLanguageStart: 0,
+  embeddedLanguageEnd: 0,
+  tag: '',
+  type: '',
+}
+
+const getEmbeddedScriptLanguageId = () => {
+  return 'javascript'
+}
+
+const getEmbeddedStyleLanguageId = () => {
+  return 'css'
+}
+
+/**
+ * @param {string} tag
+ */
+const getEmbeddedLangageId = (tag) => {
+  switch (tag) {
+    case 'script':
+      return getEmbeddedScriptLanguageId()
+    case 'style':
+      return getEmbeddedStyleLanguageId()
+    default:
+      return ''
+  }
+}
+
+/**
+ *
+ * @param {string} tag
+ * @returns
+ */
+const getEmbeddedContentState = (tag) => {
+  switch (tag) {
+    case 'script':
+      return State.InsideScriptContent
+    case 'style':
+      return State.InsideStyleContent
+    default:
+      return State.TopLevelContent
+  }
 }
 
 /**
@@ -115,6 +198,13 @@ export const tokenizeLine = (line, lineState) => {
   let tokens = []
   let token = TokenType.None
   let state = lineState.state
+  let tag = lineState.tag
+  let embeddedLanguage = lineState.embeddedLanguage
+  let embeddedLanguageStart = lineState.embeddedLanguageStart
+  let embeddedLanguageEnd = lineState.embeddedLanguageEnd
+  let specialTag = lineState.specialTag
+  let attributeName = ''
+  let type = ''
   while (index < line.length) {
     const part = line.slice(index)
     switch (state) {
@@ -146,6 +236,8 @@ export const tokenizeLine = (line, lineState) => {
         if ((next = part.match(RE_TAGNAME))) {
           token = TokenType.TagName
           state = State.InsideOpeningTag
+          tag = next[0]
+          specialTag = tag === 'script' || tag === 'style'
         } else if ((next = part.match(RE_SLASH))) {
           token = TokenType.PunctuationTag
           state = State.AfterClosingTagAngleBrackets
@@ -167,6 +259,15 @@ export const tokenizeLine = (line, lineState) => {
         if ((next = part.match(RE_ANGLE_BRACKET_CLOSE))) {
           token = TokenType.PunctuationTag
           state = State.TopLevelContent
+          const embeddedLanguageId = type || getEmbeddedLangageId(tag)
+          if (embeddedLanguageId) {
+            state = getEmbeddedContentState(tag)
+            embeddedLanguage = embeddedLanguageId
+            embeddedLanguageStart = index + next[0].length
+          }
+          specialTag = false
+          type = ''
+          attributeName = ''
         } else if ((next = part.match(RE_EXCLAMATION_MARK))) {
           token = TokenType.PunctuationTag
           state = State.InsideOpeningTag
@@ -214,6 +315,7 @@ export const tokenizeLine = (line, lineState) => {
         if ((next = part.match(RE_ATTRIBUTE_NAME))) {
           token = TokenType.AttributeName
           state = State.AfterAttributeName
+          attributeName = next[0]
         } else if ((next = part.match(RE_SELF_CLOSING))) {
           token = TokenType.PunctuationTag
           state = State.TopLevelContent
@@ -308,6 +410,52 @@ export const tokenizeLine = (line, lineState) => {
           throw new Error('no')
         }
         break
+      case State.InsideScriptContent:
+        if ((next = part.match(RE_SCRIPT_CONTENT_END))) {
+          token = TokenType.TagName
+          state = State.AfterClosingTagName
+          tokens.push(TokenType.PunctuationTag, 2, TokenType.TagName, 6)
+          index += next[0].length
+          embeddedLanguage = ''
+          continue
+        } else if ((next = part.match(RE_SCRIPT_CONTENT))) {
+          token = TokenType.Embedded
+          state = State.InsideScriptContent
+          embeddedLanguageStart = index
+          embeddedLanguageEnd = index + next[0].length
+        } else {
+          part
+          throw new Error('no')
+        }
+        break
+      case State.InsideStyleContent:
+        if (
+          (next =
+            part.match(RE_STYLE_CONTENT_END) ||
+            part.match(RE_STYLE_CONTENT_END_2))
+        ) {
+          token = TokenType.TagName
+          state = State.AfterClosingTagName
+          tokens.push(
+            TokenType.PunctuationTag,
+            2,
+            TokenType.TagName,
+            next[0].length - 1,
+          )
+          embeddedLanguageEnd = index
+          index += next[0].length
+          embeddedLanguage = ''
+          continue
+        } else if ((next = part.match(RE_STYLE_CONTENT))) {
+          token = TokenType.Embedded
+          state = State.InsideStyleContent
+          embeddedLanguageStart = index
+          embeddedLanguageEnd = index + next[0].length
+        } else {
+          part
+          throw new Error('no')
+        }
+        break
       default:
         state
         throw new Error('no')
@@ -323,5 +471,11 @@ export const tokenizeLine = (line, lineState) => {
   return {
     state,
     tokens,
+    tag,
+    embeddedLanguage,
+    embeddedLanguageStart,
+    embeddedLanguageEnd,
+    specialTag,
+    type,
   }
 }

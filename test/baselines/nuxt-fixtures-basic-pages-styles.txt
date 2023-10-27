@@ -55,13 +55,12 @@ String
 PunctuationString
 PunctuationTag
 NewLine
-Text
+Embedded
 NewLine
-Text
+Embedded
 NewLine
-Text
+Embedded
 NewLine
-PunctuationTag
 PunctuationTag
 TagName
 PunctuationTag
