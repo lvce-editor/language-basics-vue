@@ -63,8 +63,8 @@ Text
 PunctuationTag
 TagName
 Whitespace
-Text
-Text
+AttributeName
+PunctuationTag
 NewLine
 Text
 PunctuationTag
@@ -108,8 +108,8 @@ Text
 PunctuationTag
 TagName
 Whitespace
-Text
-Text
+AttributeName
+PunctuationTag
 NewLine
 Text
 PunctuationTag
