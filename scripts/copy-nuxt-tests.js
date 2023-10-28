@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
 
+const REPO = 'https://github.com/nuxt/nuxt'
 const COMMIT = '163988449cf31b4fccb487be88281eda1591bbac'
 
 const getTestName = (line) => {
@@ -30,7 +31,7 @@ const copyVueTests = async (files) => {
 const main = async () => {
   process.chdir(root)
   await rm(`${root}/.tmp`, { recursive: true, force: true })
-  await execaCommand(`git clone https://github.com/nuxt/nuxt .tmp/nuxt`, {
+  await execaCommand(`git clone ${REPO} .tmp/nuxt`, {
     stdio: 'inherit',
   })
   process.chdir(`${root}/.tmp/nuxt`)
