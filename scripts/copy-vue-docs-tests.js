@@ -25,7 +25,6 @@ const getTestName = (line) => {
 const getAllTests = async (folder) => {
   const dirents = await readdir(folder, { recursive: true })
   const allTests = []
-  console.log(dirents)
   for (const dirent of dirents) {
     if (!dirent.endsWith('template.html')) {
       continue
