@@ -1,7 +1,7 @@
 FROM gitpod/workspace-full:latest
 
 RUN bash -c ". .nvm/nvm.sh \
-    && nvm install 18.18.2 \
+    && nvm install 22.16.0 \
     && nvm use 18.18.2 \
     && nvm alias default 18.18.2"
 
