@@ -5,9 +5,12 @@
   "languages": [
     {
       "id": "vue",
-      "extensions": [".vue"],
+      "extensions": [
+        ".vue"
+      ],
       "tokenize": "src/tokenizeVue.js",
       "configuration": "./languageConfiguration.json"
     }
-  ]
+  ],
+  "repository": "https://github.com/lvce-editor/language-basics-vue"
 }
