@@ -5,9 +5,7 @@
   "languages": [
     {
       "id": "vue",
-      "extensions": [
-        ".vue"
-      ],
+      "extensions": [".vue"],
       "tokenize": "src/tokenizeVue.js",
       "configuration": "./languageConfiguration.json"
     }
